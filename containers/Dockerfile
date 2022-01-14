@@ -19,4 +19,4 @@ RUN cargo build
 # Extract binary
 RUN cp target/debug/server /project/server
 
-CMD ["/project/server", "--statsd_address", "statsd:8125"]
+CMD ["/project/server"]

@@ -55,12 +55,17 @@ impl Authorization for ExtAuthzServer {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Networking
-    let addr = IpAddr::from_str("127.0.0.1")?;
-    let port = 5000;
+    let addr = IpAddr::from_str("0.0.0.0")?;
+    let port = 9991;
     let addr = SocketAddr::new(addr, port);
 
     let socket = Socket::new(Domain::for_address(addr), Type::STREAM, None)?;
+    socket.set_reuse_address(true)?;
+    socket.set_reuse_port(true)?;
     socket.bind(&addr.into())?;
+    socket.set_nonblocking(true)?;
+    socket.listen(128)?; // backlog
+
 
     let async_listener = TcpListener::from_std(std::net::TcpListener::from(socket))?;
     let incoming = TcpListenerStream::new(async_listener);
@@ -70,6 +75,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let service = AuthorizationServer::new(extauthz);
 
     // Start server
+    println!("Starting");
     Server::builder()
         .add_service(service)
         .serve_with_incoming(incoming)
