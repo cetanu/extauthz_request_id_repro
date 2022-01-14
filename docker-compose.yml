@@ -1,0 +1,27 @@
+version: '2.3'
+
+services:
+  extauthz:
+    build:
+      context: .
+      dockerfile: containers/Dockerfile
+
+  envoy:
+    build:
+      context: containers
+      dockerfile: envoy.Dockerfile
+    links:
+      - extauthz
+      - httpbin
+    working_dir: /app
+    ports:
+      - 9901:9901
+      - 80:8080
+    expose:
+      - 9901
+      - 80
+    environment:
+      ENVOY_UID: '0'
+
+  httpbin:
+    image: kennethreitz/httpbin

@@ -1,0 +1,20 @@
+[package]
+name = "server"
+version = "0.1.0"
+authors = ["Vasili Syrakis <vsyrakis@atlassian.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# GRPC
+prost = "0.7"
+prost-types = "0.7"
+tonic = "0.4"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal"] }
+tokio-stream = { version = "0.1", features = ["net"] }
+# Socket with SO_REUSE
+socket2 = { version = "0.4", features = ["all"] }
+
+[build-dependencies]
+tonic-build = "0.4"

@@ -1,0 +1,76 @@
+node:
+  id: dummy
+  cluster: xyz
+  locality:
+    zone: nowhere
+
+static_resources:
+  listeners:
+  - name: listener
+    address:
+      socket_address:
+        address: 0.0.0.0
+        port_value: 8080
+    filter_chains:
+      - filters:
+        - name: envoy.http_connection_manager
+          typed_config:
+            '@type': type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+            stat_prefix: test
+            codec_type: AUTO
+            generate_request_id: true
+            http_filters:
+              - name: envoy.filters.http.ext_authz
+                typed_config:
+                  '@type': type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
+                  transport_api_version: V3
+                  grpc_service:
+                    envoy_grpc:
+                      cluster_name: extauthz
+              - name: envoy.filters.http.router
+            route_config:
+              name: example
+              virtual_hosts:
+              - name: blanket_response
+                domains: 
+                - '*'
+                routes:
+                  - match: 
+                      prefix: /
+                    route: 
+                      cluster: httpbin
+  clusters:
+    - name: extauthz
+      connect_timeout: 0.010s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      http2_protocol_options: {}
+      load_assignment:
+        cluster_name: extauthz
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: extauthz
+                      port_value: 9991
+    - name: httpbin
+      connect_timeout: 0.25s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: httpbin
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: httpbin
+                      port_value: 80
+
+admin:
+  access_log_path: /dev/null
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 9901
